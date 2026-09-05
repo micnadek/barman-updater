@@ -24,87 +24,86 @@
         <div id="console"></div>
     </div>
 
+    <!-- Kluczowa poprawka: type="module" -->
     <script type="module">
-       mport { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
-
-const updateBtn = document.getElementById('updateBtn');
-const consoleDiv = document.getElementById('console');
-
-function log(message) {
-    consoleDiv.style.display = 'block';
-    consoleDiv.innerHTML += message + "\n";
-    consoleDiv.scrollTop = consoleDiv.scrollHeight;
-}
-
-const terminal = {
-    clean: () => { consoleDiv.innerHTML = ""; },
-    writeLine: (data) => { log(data); },
-    write: (data) => { log(data); }
-};
-
-updateBtn.onclick = async () => {
-    try {
-        const port = await navigator.serial.requestPort();
-        updateBtn.disabled = true;
-        updateBtn.innerText = "Updating... Please wait";
-        log("Port selected. Connecting to Barman...");
-
-        const transport = new Transport(port);
+        import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
         
-        const loader = new ESPLoader({
-            transport: transport,
-            baudrate: 115200,
-            terminal: terminal
-        });
+        const updateBtn = document.getElementById('updateBtn');
+        const consoleDiv = document.getElementById('console');
         
-        // Poprawka: main() zamiast main_fn()
-        await loader.main(); 
-        await loader.flash_id();
-        log("Connected to ESP32 successfully.");
+        function log(message) {
+            consoleDiv.style.display = 'block';
+            consoleDiv.innerHTML += message + "\n";
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
 
-        log("Downloading firmware file (BarmanV3_0_14.bin)...");
-        const response = await fetch('BarmanV3_0_14.bin');
-        if (!response.ok) throw new Error("File BarmanV3_0_14.bin not found on server.");
-        const buffer = await response.arrayBuffer();
-        const firmwareData = new Uint8Array(buffer);
-        log("Download complete. File size: " + firmwareData.length + " bytes.");
+        const terminal = {
+            clean: () => { consoleDiv.innerHTML = ""; },
+            writeLine: (data) => { log(data); },
+            write: (data) => { log(data); }
+        };
 
-        log("Starting flash process. DO NOT DISCONNECT!");
-        
-        let lastPercent = -1;
-        
-        // Poprawka: nowa, obiektowa składnia wgrywania
-        await loader.write_flash({
-            fileArray: [{ data: firmwareData, address: 0x10000 }],
-            flashSize: 'keep',
-            flashMode: 'keep',
-            flashFreq: 'keep',
-            eraseAll: false, // Zablokowane czyszczenie NVS
-            compress: true,
-            reportProgress: (fileIndex, written, total) => {
-                const percent = Math.round((written / total) * 100);
-                if (percent > lastPercent) {
-                    consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
-                    log("Flashing: " + percent + "%");
-                    lastPercent = percent;
-                }
+        updateBtn.onclick = async () => {
+            try {
+                const port = await navigator.serial.requestPort();
+                updateBtn.disabled = true;
+                updateBtn.innerText = "Updating... Please wait";
+                log("Port selected. Connecting to Barman...");
+
+                const transport = new Transport(port);
+                
+                const loader = new ESPLoader({
+                    transport: transport,
+                    baudrate: 115200,
+                    terminal: terminal
+                });
+                
+                await loader.main(); 
+                await loader.flash_id();
+                log("Connected to ESP32 successfully.");
+
+                log("Downloading firmware file (BarmanV3_0_14.bin)...");
+                const response = await fetch('BarmanV3_0_14.bin');
+                if (!response.ok) throw new Error("File BarmanV3_0_14.bin not found on server.");
+                const buffer = await response.arrayBuffer();
+                const firmwareData = new Uint8Array(buffer);
+                log("Download complete. File size: " + firmwareData.length + " bytes.");
+
+                log("Starting flash process. DO NOT DISCONNECT!");
+                
+                let lastPercent = -1;
+                
+                await loader.write_flash({
+                    fileArray: [{ data: firmwareData, address: 0x10000 }],
+                    flashSize: 'keep',
+                    flashMode: 'keep',
+                    flashFreq: 'keep',
+                    eraseAll: false, // 100% gwarancji braku formatowania
+                    compress: true,
+                    reportProgress: (fileIndex, written, total) => {
+                        const percent = Math.round((written / total) * 100);
+                        if (percent > lastPercent) {
+                            consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
+                            log("Flashing: " + percent + "%");
+                            lastPercent = percent;
+                        }
+                    }
+                });
+
+                log("SUCCESS! Firmware updated successfully.");
+                log("Restarting Barman...");
+                await loader.hard_reset();
+                
+                updateBtn.innerText = "Update Complete!";
+                updateBtn.style.backgroundColor = "#4CAF50";
+                
+            } catch (error) {
+                log("ERROR: " + error.message);
+                updateBtn.disabled = false;
+                updateBtn.innerText = "Try Again";
+                updateBtn.style.backgroundColor = "#f39c12";
             }
-        });
-
-        log("SUCCESS! Firmware updated successfully.");
-        log("Restarting Barman...");
-        await loader.hard_reset();
-        
-        updateBtn.innerText = "Update Complete!";
-        updateBtn.style.backgroundColor = "#4CAF50";
-        
-    } catch (error) {
-        log("ERROR: " + error.message);
-        updateBtn.disabled = false;
-        updateBtn.innerText = "Try Again";
-        updateBtn.style.backgroundColor = "#f39c12";
-    }
-};
+        };
     </script>
 </body>
 </html>

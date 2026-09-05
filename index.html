@@ -6,11 +6,10 @@
     <title>Firmware Update - Barman V3</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .container { background-color: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); max-width: 650px; text-align: center; border: 1px solid #333; }
+        .container { background-color: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); max-width: 600px; text-align: center; border: 1px solid #333; }
         h1 { color: #f39c12; margin-bottom: 20px; font-weight: 600; }
-        .lang-section { margin-bottom: 20px; text-align: left; padding: 0 10px; }
-        .lang-section p { line-height: 1.5; color: #ccc; font-size: 1.05em; margin: 5px 0; }
-        .warning { background-color: #2a1111; color: #ff9999; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 5px solid #ff4d4d; text-align: left; font-size: 0.95em; line-height: 1.5; }
+        p { line-height: 1.5; color: #ccc; font-size: 1.05em; margin-bottom: 25px; }
+        .warning { background-color: #2a1111; color: #ff9999; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 5px solid #ff4d4d; text-align: left; font-size: 0.95em; line-height: 1.5; }
         .footer { margin-top: 30px; font-size: 0.8em; color: #666; }
     </style>
 </head>
@@ -18,21 +17,17 @@
     <div class="container">
         <h1>Barman V3 - Firmware Update</h1>
         
-        <div class="lang-section">
-            <p>🇬🇧 Connect Barman to your PC via USB and update the firmware directly from your browser (Chrome or Edge required).</p>
-            <p>🇵🇱 Podłącz Barmana do komputera za pomocą kabla USB i zaktualizuj oprogramowanie z przeglądarki (wymagany Chrome lub Edge).</p>
-        </div>
+        <p>Connect Barman to your PC via USB and update the firmware directly from your browser (Chrome or Edge required).</p>
         
         <div class="warning">
-            <strong>⚠️ IMPORTANT / WAŻNE:</strong><br><br>
-            🇬🇧 Make sure the <b>"Erase device"</b> option is <u>UNCHECKED</u> before installing. This ensures your Wi-Fi settings, total drinks statistics (life_total), and arm calibration remain intact.<br><br>
-            🇵🇱 Upewnij się, że opcja <b>"Erase device" (Wyczyść urządzenie)</b> jest <u>ODZNACZONA</u>. Dzięki temu Twoje zapisane sieci Wi-Fi, statystyki oraz kalibracja pozostaną nienaruszone.
+            <strong>⚠️ IMPORTANT:</strong><br><br>
+            Make sure the <b>"Erase device"</b> option is <u>UNCHECKED</u> before installing. <br><br>This ensures your Wi-Fi settings, total drinks statistics (life_total), and arm calibration remain intact.
         </div>
 
         <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
         <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
         
-        <div class="footer">Serial port driver required. / Wymagany sterownik portu szeregowego.</div>
+        <div class="footer">Serial port driver required. If you encounter connection issues, try a different USB data cable.</div>
     </div>
 </body>
 </html>

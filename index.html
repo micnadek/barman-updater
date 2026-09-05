@@ -3,112 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barman V3 - Firmware Updater</title>
+    <title>Barman V3 - Firmware Installer</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         .container { background-color: #1e1e1e; padding: 40px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); max-width: 600px; width: 100%; text-align: center; border: 1px solid #333; }
-        h1 { color: #f39c12; margin-bottom: 20px; font-weight: 600; }
-        p { line-height: 1.5; color: #ccc; font-size: 1.05em; margin-bottom: 30px; }
-        button { background-color: #f39c12; color: #121212; border: none; padding: 15px 30px; font-size: 1.2em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; width: 100%; }
-        button:hover { background-color: #e67e22; box-shadow: 0 0 15px rgba(243, 156, 18, 0.4); }
-        button:disabled { background-color: #555; color: #888; cursor: not-allowed; box-shadow: none; }
+        h1 { color: #f39c12; margin-bottom: 10px; font-weight: 600; }
+        p { line-height: 1.5; color: #ccc; font-size: 1.05em; margin-bottom: 25px; }
+        .button-group { display: flex; gap: 15px; flex-direction: column; }
+        button { border: none; padding: 15px 30px; font-size: 1.1em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; width: 100%; }
+        .btn-update { background-color: #4CAF50; color: #fff; }
+        .btn-update:hover { background-color: #45a049; box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
+        .btn-install { background-color: #e74c3c; color: #fff; }
+        .btn-install:hover { background-color: #c0392b; box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); }
+        button:disabled { background-color: #555 !important; color: #888 !important; cursor: not-allowed; box-shadow: none !important; }
         #console { background-color: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; text-align: left; padding: 15px; border-radius: 8px; margin-top: 25px; height: 200px; overflow-y: auto; font-size: 0.9em; white-space: pre-wrap; display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Barman V3 Updater</h1>
-        <p>Connect your machine via USB cable and click the button below. Your Wi-Fi settings, calibration, and drink statistics are 100% safe.</p>
+        <h1>Barman V3 Installer</h1>
+        <p>Select the appropriate option below based on your needs.</p>
         
-        <button id="updateBtn">Connect & Update</button>
+        <div class="button-group">
+            <button id="updateBtn" class="btn-update">UPDATE (Keep Wi-Fi & Stats)</button>
+            <button id="installBtn" class="btn-install">FIRST INSTALL (Erases Everything)</button>
+        </div>
         <div id="console"></div>
     </div>
 
     <script type="module">
-    import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
-
-const updateBtn = document.getElementById('updateBtn');
-const consoleDiv = document.getElementById('console');
-
-function log(message) {
-    consoleDiv.style.display = 'block';
-    consoleDiv.innerHTML += message + "\n";
-    consoleDiv.scrollTop = consoleDiv.scrollHeight;
-}
-
-const terminal = {
-    clean: () => { consoleDiv.innerHTML = ""; },
-    writeLine: (data) => { log(data); },
-    write: (data) => { log(data); }
-};
-
-updateBtn.onclick = async () => {
-    try {
-        const port = await navigator.serial.requestPort();
-        updateBtn.disabled = true;
-        updateBtn.innerText = "Updating... Please wait";
-        log("Port selected. Connecting to Barman...");
-
-        const transport = new Transport(port);
+        import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
         
-        const loader = new ESPLoader({
-            transport: transport,
-            baudrate: 115200,
-            terminal: terminal
-        });
+        const updateBtn = document.getElementById('updateBtn');
+        const installBtn = document.getElementById('installBtn');
+        const consoleDiv = document.getElementById('console');
         
-        await loader.main(); 
-        log("Connected to ESP32 successfully.");
-
-        log("Downloading firmware file (BarmanV3_0_14.bin)...");
-        const response = await fetch('BarmanV3_0_14.bin');
-        if (!response.ok) throw new Error("File BarmanV3_0_14.bin not found on server.");
-        
-        // Pobranie pliku jako ArrayBuffer i konwersja na format akceptowany przez esptool-js
-        const buffer = await response.arrayBuffer();
-        let binaryString = "";
-        const bytes = new Uint8Array(buffer);
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            binaryString += String.fromCharCode(bytes[i]);
+        function log(message) {
+            consoleDiv.style.display = 'block';
+            consoleDiv.innerHTML += message + "\n";
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
         }
-        
-        log("Download complete. File size: " + len + " bytes.");
 
-        log("Starting flash process. DO NOT DISCONNECT!");
-        
-        let lastPercent = -1;
-        
-        await loader.writeFlash({
-            fileArray: [{ data: binaryString, address: 0x0 }],
-            flashSize: 'keep',
-            flashMode: 'keep',
-            flashFreq: 'keep',
-            eraseAll: false, // Ochrona NVS
-            compress: true,
-            reportProgress: (fileIndex, written, total) => {
-                const percent = Math.round((written / total) * 100);
-                if (percent > lastPercent) {
-                    consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
-                    log("Flashing: " + percent + "%");
-                    lastPercent = percent;
-                }
-            }
-        });
-
-     log("SUCCESS! Firmware updated successfully.");
-log("Please unplug and replug the USB cable to restart Barman.");
-
-updateBtn.innerText = "Update Complete!";
-updateBtn.style.backgroundColor = "#4CAF50";
-        
-    } catch (error) {
-        log("ERROR: " + error.message);
-        updateBtn.disabled = false;
-        updateBtn.innerText = "Try Again";
-        updateBtn.style.backgroundColor = "#f39c12";
-            }
+        const terminal = {
+            clean: () => { consoleDiv.innerHTML = ""; },
+            writeLine: (data) => { log(data); },
+            write: (data) => { log(data); }
         };
+
+        async function startFlash(fileName, offset, isFirstInstall) {
+            if (isFirstInstall) {
+                const confirmMsg = "WARNING: This is for new, blank ESP32 boards only! It will erase all Wi-Fi settings, calibration, and drink stats. Are you sure you want to proceed?";
+                if (!confirm(confirmMsg)) return;
+            }
+
+            updateBtn.disabled = true;
+            installBtn.disabled = true;
+
+            try {
+                const port = await navigator.serial.requestPort();
+                log("Port selected. Connecting to ESP32...");
+
+                const transport = new Transport(port);
+                const loader = new ESPLoader({
+                    transport: transport,
+                    baudrate: 115200,
+                    terminal: terminal
+                });
+                
+                await loader.main(); 
+                log("Connected successfully.");
+
+                log(`Downloading firmware file (${fileName})...`);
+                const response = await fetch(fileName);
+                if (!response.ok) throw new Error(`File ${fileName} not found on server.`);
+                
+                const buffer = await response.arrayBuffer();
+                let binaryString = "";
+                const bytes = new Uint8Array(buffer);
+                const len = bytes.byteLength;
+                for (let i = 0; i < len; i++) {
+                    binaryString += String.fromCharCode(bytes[i]);
+                }
+                
+                log("Download complete. File size: " + len + " bytes.");
+                log("Starting flash process. DO NOT DISCONNECT!");
+                
+                let lastPercent = -1;
+                
+                await loader.writeFlash({
+                    fileArray: [{ data: binaryString, address: offset }],
+                    flashSize: 'keep',
+                    flashMode: 'keep',
+                    flashFreq: 'keep',
+                    eraseAll: false,
+                    compress: true,
+                    reportProgress: (fileIndex, written, total) => {
+                        const percent = Math.round((written / total) * 100);
+                        if (percent > lastPercent) {
+                            consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
+                            log("Flashing: " + percent + "%");
+                            lastPercent = percent;
+                        }
+                    }
+                });
+
+                log("SUCCESS! Firmware written successfully.");
+                log("Please power cycle or replug Barman to start the new version.");
+                
+            } catch (error) {
+                log("ERROR: " + error.message);
+                updateBtn.disabled = false;
+                installBtn.disabled = false;
+            }
+        }
+
+        // Podpięcie przycisków do odpowiednich plików i adresów
+        updateBtn.onclick = () => startFlash('BarmanV3_0_14.bin', 0x10000, false);
+        installBtn.onclick = () => startFlash('BarmanV3_merged.bin', 0x0, true);
     </script>
 </body>
 </html>

@@ -71,19 +71,19 @@
                 
                 let lastPercent = -1;
                 
-                await loader.write_flash({
-                    fileArray: [{ data: firmwareData, address: 0x10000 }],
-                    flashSize: 'keep',
-                    flashMode: 'keep',
-                    flashFreq: 'keep',
-                    eraseAll: false,
-                    compress: true,
-                    reportProgress: (fileIndex, written, total) => {
-                        const percent = Math.round((written / total) * 100);
-                        if (percent > lastPercent) {
-                            consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
-                            log("Flashing: " + percent + "%");
-                            lastPercent = percent;
+               await loader.writeFlash({
+            fileArray: [{ data: firmwareData, address: 0x10000 }],
+            flashSize: 'keep',
+            flashMode: 'keep',
+            flashFreq: 'keep',
+            eraseAll: false,
+            compress: true,
+            reportProgress: (fileIndex, written, total) => {
+                const percent = Math.round((written / total) * 100);
+                if (percent > lastPercent) {
+                    consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
+                    log("Flashing: " + percent + "%");
+                    lastPercent = percent;
                         }
                     }
                 });

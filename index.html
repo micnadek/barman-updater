@@ -25,7 +25,7 @@
     </div>
 
     <script type="module">
-        import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
+       mport { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
 
 const updateBtn = document.getElementById('updateBtn');
 const consoleDiv = document.getElementById('console');
@@ -36,7 +36,6 @@ function log(message) {
     consoleDiv.scrollTop = consoleDiv.scrollHeight;
 }
 
-// Wirtualny terminal do przechwytywania logów z ESP32
 const terminal = {
     clean: () => { consoleDiv.innerHTML = ""; },
     writeLine: (data) => { log(data); },
@@ -52,14 +51,14 @@ updateBtn.onclick = async () => {
 
         const transport = new Transport(port);
         
-        // POPRAWKA: Wersja 0.5.x wymaga przekazania parametrów w jednym obiekcie
         const loader = new ESPLoader({
             transport: transport,
             baudrate: 115200,
             terminal: terminal
         });
         
-        await loader.main_fn();
+        // Poprawka: main() zamiast main_fn()
+        await loader.main(); 
         await loader.flash_id();
         log("Connected to ESP32 successfully.");
 
@@ -74,12 +73,15 @@ updateBtn.onclick = async () => {
         
         let lastPercent = -1;
         
-        await loader.write_flash(
-            [{ data: firmwareData, address: 0x10000 }],
-            'keep', 'keep', 'keep',
-            false,  // Ochrona NVS przed formatowaniem
-            true,   
-            (fileIndex, written, total) => {
+        // Poprawka: nowa, obiektowa składnia wgrywania
+        await loader.write_flash({
+            fileArray: [{ data: firmwareData, address: 0x10000 }],
+            flashSize: 'keep',
+            flashMode: 'keep',
+            flashFreq: 'keep',
+            eraseAll: false, // Zablokowane czyszczenie NVS
+            compress: true,
+            reportProgress: (fileIndex, written, total) => {
                 const percent = Math.round((written / total) * 100);
                 if (percent > lastPercent) {
                     consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
@@ -87,7 +89,7 @@ updateBtn.onclick = async () => {
                     lastPercent = percent;
                 }
             }
-        );
+        });
 
         log("SUCCESS! Firmware updated successfully.");
         log("Restarting Barman...");

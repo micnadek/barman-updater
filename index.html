@@ -24,7 +24,6 @@
         <div id="console"></div>
     </div>
 
-    <!-- Kluczowa poprawka: type="module" -->
     <script type="module">
         import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
         
@@ -59,7 +58,6 @@
                 });
                 
                 await loader.main(); 
-                await loader.flash_id();
                 log("Connected to ESP32 successfully.");
 
                 log("Downloading firmware file (BarmanV3_0_14.bin)...");
@@ -78,7 +76,7 @@
                     flashSize: 'keep',
                     flashMode: 'keep',
                     flashFreq: 'keep',
-                    eraseAll: false, // 100% gwarancji braku formatowania
+                    eraseAll: false,
                     compress: true,
                     reportProgress: (fileIndex, written, total) => {
                         const percent = Math.round((written / total) * 100);

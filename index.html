@@ -9,7 +9,6 @@
         .container { background-color: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); max-width: 600px; text-align: center; border: 1px solid #333; }
         h1 { color: #f39c12; margin-bottom: 20px; font-weight: 600; }
         p { line-height: 1.5; color: #ccc; font-size: 1.05em; margin-bottom: 25px; }
-        .warning { background-color: #2a1111; color: #ff9999; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 5px solid #ff4d4d; text-align: left; font-size: 0.95em; line-height: 1.5; }
         .footer { margin-top: 30px; font-size: 0.8em; color: #666; }
     </style>
 </head>
@@ -19,10 +18,9 @@
         
         <p>Connect Barman to your PC via USB and update the firmware directly from your browser (Chrome or Edge required).</p>
         
-        <div class="warning">
-            <strong>⚠️ IMPORTANT:</strong><br><br>
-            Make sure the <b>"Erase device"</b> option is <u>UNCHECKED</u> before installing. <br><br>This ensures your Wi-Fi settings, total drinks statistics (life_total), and arm calibration remain intact.
-        </div>
+        <p style="color: #4CAF50; font-weight: bold; margin-bottom: 30px;">
+            Your Wi-Fi settings, total drinks statistics (life_total), and arm calibration will remain intact during this update.
+        </p>
 
         <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
         <esp-web-install-button manifest="manifest.json"></esp-web-install-button>

@@ -1,0 +1,28 @@
+INSTRUKCJA DLA CIEBIE - JAK OPUBLIKOWAĆ INSTALATOR DLA KLIENTÓW
+
+Stworzenie gotowego linku dla klientów z Gumroad jest darmowe i zajmie Ci 3 minuty.
+
+KROK 1: Przygotuj plik aktualizacji
+1. Otwórz swój kod V3.0.15 w Arduino IDE.
+2. Z górnego menu wybierz "Szkic" -> "Eksportuj skompilowany plik binarny".
+3. Zmień nazwę nowo wygenerowanego pliku .bin dokładnie na: BarmanV3_update.bin
+
+KROK 2: Załóż darmowy hosting (GitHub Pages)
+1. Załóż darmowe konto na stronie https://github.com/ (jeśli nie masz).
+2. Utwórz nowe, publiczne repozytorium (New Repository). Nazwij je np. "BarmanV3-Updater".
+3. Prześlij do tego repozytorium równe 3 pliki:
+   - index.html (z tego folderu)
+   - manifest.json (z tego folderu)
+   - BarmanV3_update.bin (Twój wyeksportowany kod z Kroku 1)
+4. Potwierdź przesłanie klikając "Commit changes".
+
+KROK 3: Uruchom stronę
+1. Będąc w swoim nowym repozytorium na GitHub, kliknij w zakładkę "Settings" (Ustawienia) na górnym pasku.
+2. Z lewego menu wybierz "Pages".
+3. W sekcji "Build and deployment" pod "Branch" zmień "None" na "main" i kliknij "Save".
+4. Odczekaj 2-3 minuty i odśwież stronę. Na górze pojawi się Twój gotowy link (np. https://twojanazwa.github.io/BarmanV3-Updater/).
+
+KROK 4: Dystrybucja
+Gotowe! Skopiuj ten link i wklej go do instrukcji PDF na Gumroad z dopiskiem: "Aby zaktualizować maszynę do najnowszej wersji, wejdź na tę stronę w przeglądarce Chrome, podłącz kabel USB i kliknij przycisk, pamiętając o odznaczeniu opcji Erase Device".
+
+Za każdym razem, gdy będziesz chciał wydać nową wersję, po prostu podmieniasz plik BarmanV3_update.bin w swoim repozytorium na GitHubie, a strona zaktualizuje się sama.

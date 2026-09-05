@@ -1,0 +1,15 @@
+{
+  "name": "Barman V3 Firmware",
+  "version": "3.0.15",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        {
+          "path": "BarmanV3_update.bin",
+          "offset": 65536
+        }
+      ]
+    }
+  ]
+}

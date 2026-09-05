@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aktualizacja Oprogramowania - Barman V3</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background-color: #1e1e1e; padding: 40px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); max-width: 600px; text-align: center; border: 1px solid #333; }
+        h1 { color: #f39c12; margin-bottom: 10px; font-weight: 600; }
+        p { line-height: 1.6; margin-bottom: 25px; color: #ccc; font-size: 1.1em; }
+        .warning { background-color: #2a1111; color: #ff9999; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 5px solid #ff4d4d; text-align: left; font-size: 0.95em; line-height: 1.5; }
+        .footer { margin-top: 30px; font-size: 0.8em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Barman V3 - Aktualizacja</h1>
+        <p>Podłącz Barmana do komputera za pomocą kabla USB i zaktualizuj oprogramowanie bezpośrednio z przeglądarki (wymagany Chrome lub Edge).</p>
+        
+        <div class="warning">
+            <strong>⚠️ WAŻNE - ZACHOWANIE USTAWIEŃ:</strong><br><br>
+            Po kliknięciu przycisku i wybraniu portu, upewnij się, że opcja <b>"Erase device" (Wyczyść urządzenie)</b> jest <u>ODZNACZONA</u>. <br><br>Dzięki temu Twoje zapisane sieci Wi-Fi, statystyki wykonanych drinków (life_total) oraz kalibracja ramienia pozostaną nienaruszone.
+        </div>
+
+        <!-- Oficjalny komponent ESP Web Tools -->
+        <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+        <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+        
+        <div class="footer">Wymagany sterownik portu szeregowego. W razie problemów z połączeniem, użyj innego kabla USB.</div>
+    </div>
+</body>
+</html>

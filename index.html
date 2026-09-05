@@ -25,58 +25,66 @@
     </div>
 
     <script type="module">
-        import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
+    import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
+
+const updateBtn = document.getElementById('updateBtn');
+const consoleDiv = document.getElementById('console');
+
+function log(message) {
+    consoleDiv.style.display = 'block';
+    consoleDiv.innerHTML += message + "\n";
+    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+}
+
+const terminal = {
+    clean: () => { consoleDiv.innerHTML = ""; },
+    writeLine: (data) => { log(data); },
+    write: (data) => { log(data); }
+};
+
+updateBtn.onclick = async () => {
+    try {
+        const port = await navigator.serial.requestPort();
+        updateBtn.disabled = true;
+        updateBtn.innerText = "Updating... Please wait";
+        log("Port selected. Connecting to Barman...");
+
+        const transport = new Transport(port);
         
-        const updateBtn = document.getElementById('updateBtn');
-        const consoleDiv = document.getElementById('console');
+        const loader = new ESPLoader({
+            transport: transport,
+            baudrate: 115200,
+            terminal: terminal
+        });
         
-        function log(message) {
-            consoleDiv.style.display = 'block';
-            consoleDiv.innerHTML += message + "\n";
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        await loader.main(); 
+        log("Connected to ESP32 successfully.");
+
+        log("Downloading firmware file (BarmanV3_0_14.bin)...");
+        const response = await fetch('BarmanV3_0_14.bin');
+        if (!response.ok) throw new Error("File BarmanV3_0_14.bin not found on server.");
+        
+        // Pobranie pliku jako ArrayBuffer i konwersja na format akceptowany przez esptool-js
+        const buffer = await response.arrayBuffer();
+        let binaryString = "";
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binaryString += String.fromCharCode(bytes[i]);
         }
+        
+        log("Download complete. File size: " + len + " bytes.");
 
-        const terminal = {
-            clean: () => { consoleDiv.innerHTML = ""; },
-            writeLine: (data) => { log(data); },
-            write: (data) => { log(data); }
-        };
-
-        updateBtn.onclick = async () => {
-            try {
-                const port = await navigator.serial.requestPort();
-                updateBtn.disabled = true;
-                updateBtn.innerText = "Updating... Please wait";
-                log("Port selected. Connecting to Barman...");
-
-                const transport = new Transport(port);
-                
-                const loader = new ESPLoader({
-                    transport: transport,
-                    baudrate: 115200,
-                    terminal: terminal
-                });
-                
-                await loader.main(); 
-                log("Connected to ESP32 successfully.");
-
-                log("Downloading firmware file (BarmanV3_0_14.bin)...");
-                const response = await fetch('BarmanV3_0_14.bin');
-                if (!response.ok) throw new Error("File BarmanV3_0_14.bin not found on server.");
-                const buffer = await response.arrayBuffer();
-                const firmwareData = new Uint8Array(buffer);
-                log("Download complete. File size: " + firmwareData.length + " bytes.");
-
-                log("Starting flash process. DO NOT DISCONNECT!");
-                
-                let lastPercent = -1;
-                
-               await loader.writeFlash({
-            fileArray: [{ data: firmwareData, address: 0x10000 }],
+        log("Starting flash process. DO NOT DISCONNECT!");
+        
+        let lastPercent = -1;
+        
+        await loader.writeFlash({
+            fileArray: [{ data: binaryString, address: 0x10000 }],
             flashSize: 'keep',
             flashMode: 'keep',
             flashFreq: 'keep',
-            eraseAll: false,
+            eraseAll: false, // Ochrona NVS
             compress: true,
             reportProgress: (fileIndex, written, total) => {
                 const percent = Math.round((written / total) * 100);
@@ -84,22 +92,25 @@
                     consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
                     log("Flashing: " + percent + "%");
                     lastPercent = percent;
-                        }
-                    }
-                });
+                }
+            }
+        });
 
-                log("SUCCESS! Firmware updated successfully.");
-                log("Restarting Barman...");
-                await loader.hard_reset();
-                
-                updateBtn.innerText = "Update Complete!";
-                updateBtn.style.backgroundColor = "#4CAF50";
-                
-            } catch (error) {
-                log("ERROR: " + error.message);
-                updateBtn.disabled = false;
-                updateBtn.innerText = "Try Again";
-                updateBtn.style.backgroundColor = "#f39c12";
+        log("SUCCESS! Firmware updated successfully.");
+        log("Restarting Barman...");
+        
+        await loader.hardReset();
+        
+        updateBtn.innerText = "Update Complete!";
+        updateBtn.style.backgroundColor = "#4CAF50";
+        
+    } catch (error) {
+        log("ERROR: " + error.message);
+        updateBtn.disabled = false;
+        updateBtn.innerText = "Try Again";
+        updateBtn.style.backgroundColor = "#f39c12";
+    }
+};
             }
         };
     </script>

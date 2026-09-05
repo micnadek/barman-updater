@@ -96,13 +96,16 @@ updateBtn.onclick = async () => {
             }
         });
 
-        log("SUCCESS! Firmware updated successfully.");
-        log("Restarting Barman...");
-        
-        await loader.hardReset();
-        
-        updateBtn.innerText = "Update Complete!";
-        updateBtn.style.backgroundColor = "#4CAF50";
+       log("SUCCESS! Firmware updated successfully.");
+log("Restarting Barman...");
+
+// Prawidłowy restart sprzętowy dla tej wersji transportu
+await transport.setDtr(false);
+await new Promise(resolve => setTimeout(resolve, 100));
+await transport.setDtr(true);
+
+updateBtn.innerText = "Update Complete!";
+updateBtn.style.backgroundColor = "#4CAF50";
         
     } catch (error) {
         log("ERROR: " + error.message);

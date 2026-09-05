@@ -80,7 +80,7 @@ updateBtn.onclick = async () => {
         let lastPercent = -1;
         
         await loader.writeFlash({
-            fileArray: [{ data: binaryString, address: 0x10000 }],
+            fileArray: [{ data: binaryString, address: 0x0 }],
             flashSize: 'keep',
             flashMode: 'keep',
             flashFreq: 'keep',

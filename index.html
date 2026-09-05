@@ -24,10 +24,10 @@
         <div id="console"></div>
     </div>
 
-    <!-- Engine esptool-js -->
-    <script src="https://unpkg.com/esptool-js/bundle.js"></script>
-    
-    <script>
+    <script type="module">
+        // Poprawiony import stabilnego silnika
+        import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
+        
         const updateBtn = document.getElementById('updateBtn');
         const consoleDiv = document.getElementById('console');
         
@@ -38,19 +38,14 @@
         }
 
         updateBtn.onclick = async () => {
-            if (!window.esptooljs) {
-                alert("Error: Flash engine not loaded. Check internet connection.");
-                return;
-            }
-
             try {
                 const port = await navigator.serial.requestPort();
                 updateBtn.disabled = true;
                 updateBtn.innerText = "Updating... Please wait";
                 log("Port selected. Connecting to Barman...");
 
-                const transport = new window.esptooljs.Transport(port);
-                const loader = new window.esptooljs.ESPLoader(transport, 115200, null);
+                const transport = new Transport(port);
+                const loader = new ESPLoader(transport, 115200, null);
                 await loader.main_fn();
                 await loader.flash_id();
                 log("Connected to ESP32 successfully.");
@@ -69,7 +64,7 @@
                 await loader.write_flash(
                     [{ data: firmwareData, address: 0x10000 }],
                     'keep', 'keep', 'keep',
-                    false,  // <--- TEN PARAMETR GWARANTUJE BRAK CZYSZCZENIA NVS
+                    false,  // Zabezpieczenie przed czyszczeniem pamięci NVS
                     true,   
                     (fileIndex, written, total) => {
                         const percent = Math.round((written / total) * 100);
@@ -92,6 +87,7 @@
                 log("ERROR: " + error.message);
                 updateBtn.disabled = false;
                 updateBtn.innerText = "Try Again";
+                updateBtn.style.backgroundColor = "#f39c12";
             }
         };
     </script>

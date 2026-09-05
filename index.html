@@ -3,29 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firmware Update - Barman V3</title>
+    <title>Barman V3 - Firmware Updater</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .container { background-color: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); max-width: 600px; text-align: center; border: 1px solid #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .container { background-color: #1e1e1e; padding: 40px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); max-width: 600px; width: 100%; text-align: center; border: 1px solid #333; }
         h1 { color: #f39c12; margin-bottom: 20px; font-weight: 600; }
-        p { line-height: 1.5; color: #ccc; font-size: 1.05em; margin-bottom: 25px; }
-        .footer { margin-top: 30px; font-size: 0.8em; color: #666; }
+        p { line-height: 1.5; color: #ccc; font-size: 1.05em; margin-bottom: 30px; }
+        button { background-color: #f39c12; color: #121212; border: none; padding: 15px 30px; font-size: 1.2em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; width: 100%; }
+        button:hover { background-color: #e67e22; box-shadow: 0 0 15px rgba(243, 156, 18, 0.4); }
+        button:disabled { background-color: #555; color: #888; cursor: not-allowed; box-shadow: none; }
+        #console { background-color: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; text-align: left; padding: 15px; border-radius: 8px; margin-top: 25px; height: 200px; overflow-y: auto; font-size: 0.9em; white-space: pre-wrap; display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Barman V3 - Firmware Update</h1>
+        <h1>Barman V3 Updater</h1>
+        <p>Connect your machine via USB cable and click the button below. Your Wi-Fi settings, calibration, and drink statistics are 100% safe.</p>
         
-        <p>Connect Barman to your PC via USB and update the firmware directly from your browser (Chrome or Edge required).</p>
-        
-        <p style="color: #4CAF50; font-weight: bold; margin-bottom: 30px;">
-            Your Wi-Fi settings, total drinks statistics (life_total), and arm calibration will remain intact during this update.
-        </p>
-
-        <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
-        <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
-        
-        <div class="footer">Serial port driver required. If you encounter connection issues, try a different USB data cable.</div>
+        <button id="updateBtn">Connect & Update</button>
+        <div id="console"></div>
     </div>
+
+    <!-- Engine esptool-js -->
+    <script src="https://unpkg.com/esptool-js/bundle.js"></script>
+    
+    <script>
+        const updateBtn = document.getElementById('updateBtn');
+        const consoleDiv = document.getElementById('console');
+        
+        function log(message) {
+            consoleDiv.style.display = 'block';
+            consoleDiv.innerHTML += message + "\n";
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        updateBtn.onclick = async () => {
+            if (!window.esptooljs) {
+                alert("Error: Flash engine not loaded. Check internet connection.");
+                return;
+            }
+
+            try {
+                const port = await navigator.serial.requestPort();
+                updateBtn.disabled = true;
+                updateBtn.innerText = "Updating... Please wait";
+                log("Port selected. Connecting to Barman...");
+
+                const transport = new window.esptooljs.Transport(port);
+                const loader = new window.esptooljs.ESPLoader(transport, 115200, null);
+                await loader.main_fn();
+                await loader.flash_id();
+                log("Connected to ESP32 successfully.");
+
+                log("Downloading firmware file (BarmanV3_0_14.bin)...");
+                const response = await fetch('BarmanV3_0_14.bin');
+                if (!response.ok) throw new Error("File BarmanV3_0_14.bin not found on server.");
+                const buffer = await response.arrayBuffer();
+                const firmwareData = new Uint8Array(buffer);
+                log("Download complete. File size: " + firmwareData.length + " bytes.");
+
+                log("Starting flash process. DO NOT DISCONNECT!");
+                
+                let lastPercent = -1;
+                
+                await loader.write_flash(
+                    [{ data: firmwareData, address: 0x10000 }],
+                    'keep', 'keep', 'keep',
+                    false,  // <--- TEN PARAMETR GWARANTUJE BRAK CZYSZCZENIA NVS
+                    true,   
+                    (fileIndex, written, total) => {
+                        const percent = Math.round((written / total) * 100);
+                        if (percent > lastPercent) {
+                            consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/Flashing: .*\n?$/, '');
+                            log("Flashing: " + percent + "%");
+                            lastPercent = percent;
+                        }
+                    }
+                );
+
+                log("SUCCESS! Firmware updated successfully.");
+                log("Restarting Barman...");
+                await loader.hard_reset();
+                
+                updateBtn.innerText = "Update Complete!";
+                updateBtn.style.backgroundColor = "#4CAF50";
+                
+            } catch (error) {
+                log("ERROR: " + error.message);
+                updateBtn.disabled = false;
+                updateBtn.innerText = "Try Again";
+            }
+        };
+    </script>
 </body>
 </html>

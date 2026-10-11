@@ -10,9 +10,17 @@
         h1 { color: #f39c12; margin-bottom: 10px; font-weight: 600; }
         p { line-height: 1.5; color: #ccc; font-size: 1.05em; margin-bottom: 25px; }
         .button-group { display: flex; gap: 15px; flex-direction: column; }
+        .firmware-card { background: #262626; border: 1px solid #3a3a3a; border-radius: 10px; padding: 18px; text-align: left; }
+        .firmware-card.current { border-color: #4CAF50; box-shadow: 0 0 18px rgba(76, 175, 80, 0.12); }
+        .firmware-card h2 { margin: 0 0 8px; color: #fff; font-size: 1.2em; }
+        .firmware-card p { margin: 0 0 14px; font-size: 0.92em; color: #bbb; }
+        .version-badge { display: inline-block; margin-left: 8px; padding: 3px 8px; border-radius: 999px; background: #4CAF50; color: #fff; font-size: 0.68em; vertical-align: middle; }
+        .previous-badge { background: #666; }
         button { border: none; padding: 15px 30px; font-size: 1.1em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; width: 100%; }
         .btn-update { background-color: #4CAF50; color: #fff; }
         .btn-update:hover { background-color: #45a049; box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
+        .btn-previous { background-color: #607D8B; color: #fff; }
+        .btn-previous:hover { background-color: #526c78; box-shadow: 0 0 15px rgba(96, 125, 139, 0.35); }
         .btn-install { background-color: #e74c3c; color: #fff; }
         .btn-install:hover { background-color: #c0392b; box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); }
         button:disabled { background-color: #555 !important; color: #888 !important; cursor: not-allowed; box-shadow: none !important; }
@@ -22,11 +30,26 @@
 <body>
     <div class="container">
         <h1>Barman V3 Installer</h1>
-        <p>Select the appropriate option below based on your needs.</p>
+        <p>Select the firmware version and installation type below.</p>
         
         <div class="button-group">
-            <button id="updateBtn" class="btn-update">UPDATE (Keep Wi-Fi & Stats)</button>
-            <button id="installBtn" class="btn-install">FIRST INSTALL (Erases Everything)</button>
+            <div class="firmware-card current">
+                <h2>Firmware V3.0.17 <span class="version-badge">LATEST</span></h2>
+                <p>Update an existing Barman V3. Keeps Wi-Fi settings, calibration, preferences and statistics.</p>
+                <button id="update17Btn" class="btn-update">UPDATE TO V3.0.17</button>
+            </div>
+
+            <div class="firmware-card">
+                <h2>Firmware V3.0.16 <span class="version-badge previous-badge">PREVIOUS</span></h2>
+                <p>Reinstall or return to the previous firmware while keeping saved settings and statistics.</p>
+                <button id="update16Btn" class="btn-previous">UPDATE TO V3.0.16</button>
+            </div>
+
+            <div class="firmware-card">
+                <h2>First installation — V3.0.16</h2>
+                <p>For a new or blank ESP32. This erases Wi-Fi settings, calibration, preferences and statistics.</p>
+                <button id="installBtn" class="btn-install">FIRST INSTALL V3.0.16</button>
+            </div>
         </div>
         <div id="console"></div>
     </div>
@@ -34,8 +57,10 @@
     <script type="module">
         import { Transport, ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.4/+esm";
         
-        const updateBtn = document.getElementById('updateBtn');
+        const update17Btn = document.getElementById('update17Btn');
+        const update16Btn = document.getElementById('update16Btn');
         const installBtn = document.getElementById('installBtn');
+        const flashButtons = [update17Btn, update16Btn, installBtn];
         const consoleDiv = document.getElementById('console');
         
         function log(message) {
@@ -56,8 +81,7 @@
                 if (!confirm(confirmMsg)) return;
             }
 
-            updateBtn.disabled = true;
-            installBtn.disabled = true;
+            flashButtons.forEach(button => button.disabled = true);
 
             try {
                 const port = await navigator.serial.requestPort();
@@ -112,13 +136,13 @@
                 
             } catch (error) {
                 log("ERROR: " + error.message);
-                updateBtn.disabled = false;
-                installBtn.disabled = false;
+                flashButtons.forEach(button => button.disabled = false);
             }
         }
 
-        // Podpięcie przycisków do odpowiednich plików i adresów
-        updateBtn.onclick = () => startFlash('BarmanV3_0_14.bin', 0x10000, false);
+        // Application-only updates preserve Wi-Fi, calibration, preferences and statistics.
+        update17Btn.onclick = () => startFlash('BarmanV3_0_17.bin', 0x10000, false);
+        update16Btn.onclick = () => startFlash('BarmanV3_0_14.bin', 0x10000, false);
         installBtn.onclick = () => startFlash('BarmanV3_merged.bin', 0x0, true);
     </script>
 </body>
